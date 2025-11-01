@@ -106,7 +106,7 @@ class KafkaRouter:
                     logger.info(f"Pregunta routeada a 'preguntas-llm': {pregunta_id}")
                     
         except Exception as e:
-            logger.error(f"💥 Error en router: {e}")
+            logger.error(f" Error en router: {e}")
             sys.exit(1)
 
     def start(self):
@@ -123,4 +123,5 @@ if __name__ == '__main__':
         router.running = False
     except Exception as e:
         logger.error(f"Error fatal: {e}")
+
         sys.exit(1)
