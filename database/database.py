@@ -7,7 +7,6 @@ import json
 from kafka import KafkaConsumer
 import threading
 
-# Configurar logging
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
@@ -83,11 +82,10 @@ class DatabaseManager:
                 logger.warning("Conexión MySQL no disponible")
                 return False
             
-            # Crear un cursor nuevo cada vez para evitar "Unread result found"
             cursor = self.conn.cursor()
             cursor.execute("SELECT 1")
-            result = cursor.fetchone()  # Leer el resultado
-            cursor.close()  # Cerrar el cursor inmediatamente
+            result = cursor.fetchone() 
+            cursor.close()  
             
             return True
         except Exception as e:
@@ -163,7 +161,6 @@ class DatabaseManager:
             avg_score_result = cursor.fetchone()
             avg_score = float(avg_score_result[0]) if avg_score_result[0] is not None else 0.0
             
-            # Distribución de scores
             cursor.execute("""
                 SELECT 
                     COUNT(*) as count,
@@ -251,7 +248,6 @@ class DatabaseManager:
         thread.start()
         logger.info("Consumidor Kafka iniciado")
 
-# Crear aplicación Flask
 app = Flask(__name__)
 db_manager = DatabaseManager()
 
@@ -323,4 +319,5 @@ def detailed_stats():
 
 if __name__ == '__main__':
     print(" Esperando consultas HTTP y mensajes Kafka...")
+
     app.run(host='0.0.0.0', port=8001, debug=False)
