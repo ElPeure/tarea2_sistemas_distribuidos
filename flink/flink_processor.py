@@ -341,9 +341,9 @@ class FlinkProcessor:
                     beginning = consumer.beginning_offsets([topic_partition])[topic_partition]
                     end = consumer.end_offsets([topic_partition])[topic_partition]
                     current = consumer.position(topic_partition)
-                    logger.info(f"📊 Topic {topic_partition}: offsets inicio={beginning}, fin={end}, actual={current}")
+                    logger.info(f" Topic {topic_partition}: offsets inicio={beginning}, fin={end}, actual={current}")
                 
-                logger.info("📡 Esperando mensajes de respuestas LLM...")
+                logger.info(" Esperando mensajes de respuestas LLM...")
                 
                 message_count = 0
                 for message in consumer:
@@ -367,7 +367,7 @@ class FlinkProcessor:
                         respuesta_llm = data.get('respuesta_llm', '')
                         respuesta_real = data.get('respuesta_real', '')
                         
-                        logger.info(f"🔍 Calculando similitud...")
+                        logger.info(f" Calculando similitud...")
                         
                         score = self.calculate_similarity_advanced(respuesta_llm, respuesta_real)
                         
@@ -384,7 +384,7 @@ class FlinkProcessor:
                                 logger.info(f"Usando score simple: {score:.4f}")
                         
                     except Exception as e:
-                        logger.error(f"💥 ERROR calculando score: {e}")
+                        logger.error(f" ERROR calculando score: {e}")
                         score = 0.0
                     
                     processed_data = {
@@ -467,7 +467,7 @@ class FlinkProcessor:
                 logger.info("Modelo cargado, iniciando procesamiento...")
                 break
             if i % 10 == 0:
-                logger.info(f"⏰ Esperando modelo... ({i}s)")
+                logger.info(f" Esperando modelo... ({i}s)")
             time.sleep(1)
         
         if self.model is None:
@@ -617,4 +617,5 @@ if __name__ == '__main__':
     try:
         app.run(host='0.0.0.0', port=8005, debug=False, use_reloader=False)
     except KeyboardInterrupt:
+
         flink_processor.stop_processing()
