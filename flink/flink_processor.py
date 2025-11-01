@@ -9,7 +9,6 @@ import sys
 import os
 from collections import defaultdict
 
-# Configurar logging
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
@@ -17,7 +16,6 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-# Crear Flask app PRIMERO
 app = Flask(__name__)
 
 class FlinkMetrics:
@@ -128,7 +126,6 @@ class FlinkMetrics:
                     'improvement_from_previous': None
                 }
         
-        # Calcular mejora entre intentos consecutivos
         intentos_ordenados = sorted(improvement_data.keys())
         for i in range(1, len(intentos_ordenados)):
             current = intentos_ordenados[i]
@@ -158,13 +155,11 @@ class FlinkProcessor:
                 logger.info("Cargando modelo SentenceTransformer...")
                 from sentence_transformers import SentenceTransformer, util
                 
-                # Verificar que podemos importar
                 logger.info("Módulos SentenceTransformer importados correctamente")
                 
                 self.model = SentenceTransformer("all-MiniLM-L6-v2")
                 logger.info("Modelo cargado exitosamente")
                 
-                # Probar el modelo
                 test_text = "Hello world"
                 embedding = self.model.encode(test_text)
                 logger.info(f"Test embedding generado - dim: {embedding.shape}")
@@ -210,29 +205,24 @@ class FlinkProcessor:
             resp_llm = respuesta_llm.lower().strip()
             resp_real = respuesta_real.lower().strip()
             
-            # Si son idénticas después de normalizar
             if resp_llm == resp_real:
                 return 1.0
                 
-            # Métricas múltiples
             words_llm = set(resp_llm.split())
             words_real = set(resp_real.split())
             
             if not words_llm or not words_real:
                 return 0.0
             
-            # Jaccard similarity
             intersection = len(words_llm.intersection(words_real))
             union = len(words_llm.union(words_real))
             jaccard = intersection / union if union else 0.0
             
-            # Containment (qué porcentaje de palabras de la respuesta real está en la LLM)
+            # Containment (qué porcentaje de palabras de la respuesta real está en la llm)
             containment = intersection / len(words_real) if words_real else 0.0
             
-            # Overlap coefficient
             overlap = intersection / min(len(words_llm), len(words_real)) if min(len(words_llm), len(words_real)) > 0 else 0.0
             
-            # Combinar métricas
             final_score = (jaccard + containment + overlap) / 3.0
             
             logger.info(f"Score simple - Jaccard: {jaccard:.3f}, Containment: {containment:.3f}, Overlap: {overlap:.3f} -> Final: {final_score:.3f}")
@@ -244,7 +234,6 @@ class FlinkProcessor:
             return 0.0
 
     def calculate_similarity_advanced(self, respuesta_llm, respuesta_real):
-        # VERIFICACIONES INICIALES
         if not respuesta_llm or not respuesta_real:
             logger.warning("Una de las respuestas está vacía")
             return 0.0
@@ -253,7 +242,6 @@ class FlinkProcessor:
             logger.warning("Respuesta LLM contiene error")
             return 0.1
         
-        # VERIFICAR SI EL MODELO ESTÁ CARGADO
         if self.model is None:
             logger.warning("Modelo no disponible, usando cálculo simple")
             return self.calculate_similarity_simple(respuesta_llm, respuesta_real)
@@ -261,7 +249,6 @@ class FlinkProcessor:
         try:
             logger.info(f"Calculando embeddings...")
             
-            # CALCULAR EMBEDDINGS CON MÁS DETALLE
             emb1 = self.model.encode(respuesta_llm, convert_to_tensor=True)
             emb2 = self.model.encode(respuesta_real, convert_to_tensor=True)
             
@@ -282,7 +269,6 @@ class FlinkProcessor:
         try:
             from kafka import KafkaConsumer
             
-            # Ver topics existentes
             consumer = KafkaConsumer(bootstrap_servers=self.bootstrap_servers)
             topics = consumer.topics()
             logger.info(f"Topics disponibles: {topics}")
@@ -311,7 +297,6 @@ class FlinkProcessor:
     def process_respuestas_llm(self):
         logger.info("Iniciando procesamiento de respuestas LLM desde 'respuestas-llm'...")
         
-        # EJECUTAR DIAGNÓSTICO INICIAL
         logger.info("Ejecutando diagnóstico de Kafka...")
         self.diagnose_kafka_topics()
         
@@ -324,19 +309,17 @@ class FlinkProcessor:
                     'respuestas-llm',
                     bootstrap_servers=self.bootstrap_servers,
                     value_deserializer=lambda m: json.loads(m.decode('utf-8')),
-                    group_id='flink-processor-group-v2',  # NUEVO GROUP ID
+                    group_id='flink-processor-group-v2',  
                     auto_offset_reset='earliest',
                     session_timeout_ms=60000,
                     heartbeat_interval_ms=20000,
                     max_poll_interval_ms=300000,
-                    enable_auto_commit=False  # IMPORTANTE: commit manual
+                    enable_auto_commit=False  
                 )
                 
-                # VERIFICAR SUSCRIPCIÓN
                 subscription = consumer.subscription()
                 logger.info(f"📡 Flink suscrito a: {subscription}")
                 
-                # VERIFICAR OFFSETS INICIALES
                 for topic_partition in consumer.assignment():
                     beginning = consumer.beginning_offsets([topic_partition])[topic_partition]
                     end = consumer.end_offsets([topic_partition])[topic_partition]
@@ -354,7 +337,6 @@ class FlinkProcessor:
                     data = message.value
                     pregunta_id = data.get('pregunta_id', 'unknown')
                     
-                    # DEBUG DETALLADO
                     logger.info(f"FLINK RECIBIÓ MENSAJE #{message_count}")
                     logger.info(f"Datos recibidos - ID: {pregunta_id}")
                     logger.info(f"Pregunta: {data.get('pregunta', '')[:100]}...")
@@ -363,7 +345,6 @@ class FlinkProcessor:
                     logger.info(f"Intento actual: {data.get('intento', 0)}")
                     
                     try:
-                        # CALCULAR SCORE CON MÁS DEBUG
                         respuesta_llm = data.get('respuesta_llm', '')
                         respuesta_real = data.get('respuesta_real', '')
                         
@@ -373,10 +354,8 @@ class FlinkProcessor:
                         
                         logger.info(f"SCORE CALCULADO: {score:.4f} para ID: {pregunta_id}")
                         
-                        # VERIFICAR SI EL SCORE ES VÁLIDO
                         if score == 0.0:
                             logger.warning(f"SCORE CERO - Posible error en cálculo de similitud")
-                            # Intentar cálculo simple
                             score_simple = self.calculate_similarity_simple(respuesta_llm, respuesta_real)
                             logger.info(f"Score simple: {score_simple:.4f}")
                             if score_simple > 0:
@@ -397,7 +376,6 @@ class FlinkProcessor:
                     
                     decision = None
                     
-                    # TOMA DE DECISIÓN
                     if score >= self.score_threshold:
                         decision = 'validated'
                         if self.producer:
@@ -435,12 +413,10 @@ class FlinkProcessor:
                                 self.producer.flush()
                                 logger.warning(f"FLINK RECHAZÓ - Score: {score:.4f} - Máximos reintentos - ID: {pregunta_id}")
                     
-                    # REGISTRAR MÉTRICAS PERSISTENTES
                     if decision:
                         self.metrics.record_processing(data, score, decision)
                         logger.info(f"Métricas actualizadas - Decisión: {decision}, Score: {score:.4f}")
                     
-                    # Commit manual del offset
                     consumer.commit()
                     logger.info(f"FLINK COMMIT OFFSET para mensaje #{message_count}")
                     
@@ -537,10 +513,8 @@ class FlinkProcessor:
         
         print("\n" + "="*80)
 
-# Crear instancia DESPUÉS de definir la clase
 flink_processor = FlinkProcessor(score_threshold=0.3)  # Threshold más bajo para testing
 
-# Rutas Flask
 @app.route('/health', methods=['GET'])
 def health():
     model_status = "loaded" if flink_processor.model is not None else "loading"
@@ -619,3 +593,4 @@ if __name__ == '__main__':
     except KeyboardInterrupt:
 
         flink_processor.stop_processing()
+
