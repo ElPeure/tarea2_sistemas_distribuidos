@@ -16,9 +16,11 @@ cd Flint_Kafka
 docker-compose up -d
 
 ### Verificar estado de servicios
-curl http://localhost:8001/health  # Database
-curl http://localhost:8003/health  # LLM Service  
-curl http://localhost:8005/health  # Flink Processor
+curl http://localhost:8001/health   (Database)
+
+curl http://localhost:8003/health  (LLM Service) 
+
+curl http://localhost:8005/health  (Flink Processor)
 
 ### Iniciar procesamiento
 curl -X POST http://localhost:8000/iniciar
