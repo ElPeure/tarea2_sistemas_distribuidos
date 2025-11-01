@@ -23,7 +23,7 @@ curl http://localhost:8003/health  (LLM Service)
 curl http://localhost:8005/health  (Flink Processor)
 
 ### Iniciar procesamiento
-curl -X POST http://localhost:8000/iniciar
+curl -X POST http://localhost:8000/iniciar (trafico)
 
 - Una vez completados los pasos de configuración y asegurado el espacio de almacenamiento, el programa puede ser ejecutado sin riesgo de fallos por dependencias.
 - El presente informe pero sin el archivo test.csv debido a su tamaño.
