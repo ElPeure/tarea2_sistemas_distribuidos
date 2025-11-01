@@ -5,7 +5,6 @@ from kafka import KafkaConsumer, KafkaProducer
 import threading
 import sys
 
-# Configurar logging
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
@@ -91,7 +90,7 @@ class KafkaRouter:
                 pregunta_id = data.get('pregunta_id', 'unknown')
                 intento = data.get('intento', 0)
                 
-                logger.info(f"🔄 Routeando pregunta: {pregunta_id} (Intento: {intento + 1})")
+                logger.info(f" Routeando pregunta: {pregunta_id} (Intento: {intento + 1})")
                 
                 # Determinar el destino basado en el intento
                 if intento >= 3:  # Máximo 3 reintentos
@@ -125,3 +124,4 @@ if __name__ == '__main__':
         logger.error(f"Error fatal: {e}")
 
         sys.exit(1)
+
