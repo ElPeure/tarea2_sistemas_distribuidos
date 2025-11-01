@@ -9,7 +9,7 @@ Este documento describe los pasos necesarios para la correcta configuración y e
 Para ejecutar este proyecto sin fallos, es imprescindible cumplir con los siguientes requisitos previos:
 
 ### Clonar repositorio
-git clone https://github.com/ElPeure/Flint_Kafka
+git clone [https://github.com/ElPeure/Flint_Kafka](https://github.com/ElPeure/tarea2_sistemas_distribuidos.git)
 cd Flint_Kafka
 
 ### Desplegar todos los servicios
