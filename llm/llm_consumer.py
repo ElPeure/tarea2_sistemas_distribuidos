@@ -7,7 +7,6 @@ import threading
 from flask import Flask, jsonify
 import sys
 
-# Configurar logging
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
@@ -254,4 +253,5 @@ if __name__ == '__main__':
     
     time.sleep(15)
     llm_consumer.start_processing()
+
     app.run(host='0.0.0.0', port=8003, debug=False, use_reloader=False)
