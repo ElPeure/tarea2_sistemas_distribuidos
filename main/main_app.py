@@ -8,7 +8,6 @@ from kafka import KafkaProducer
 import threading
 import os
 
-# Configurar logging
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(levelname)s - %(message)s',
@@ -20,11 +19,9 @@ class MainApp:
         try:
             print("INICIANDO APLICACIÓN PRINCIPAL CON KAFKA")
             
-            # Determinar si estamos en Docker
             self.in_docker = os.path.exists('/.dockerenv')
             self.setup_urls()
             
-            # Cargar dataset con múltiples rutas posibles
             self.df = self.load_dataset()
             if self.df is None:
                 raise Exception("No se pudo cargar el dataset desde ninguna ruta")
@@ -33,7 +30,7 @@ class MainApp:
             self.clean_dataset()
             
             print("Inicializando Kafka Producer...")
-            # Kafka Producer con manejo de errores
+            
             self.kafka_producer = self.create_kafka_producer()
             if not self.kafka_producer:
                 raise Exception("No se pudo crear el productor Kafka")
@@ -49,12 +46,12 @@ class MainApp:
     
     def load_dataset(self):
         possible_paths = [
-            '/app/preguntas/test.csv',           # Ruta en Docker
-            '/preguntas/test.csv',               # Ruta alternativa en Docker  
-            './preguntas/test.csv',              # Ruta relativa
-            'preguntas/test.csv',                # Ruta desde directorio actual
-            '/app/test.csv',                     # Ruta directa
-            'test.csv',                          # En directorio actual
+            '/app/preguntas/test.csv',           
+            '/preguntas/test.csv',              
+            './preguntas/test.csv',             
+            'preguntas/test.csv',                
+            '/app/test.csv',                     
+            'test.csv',                          
         ]
         
         for path in possible_paths:
@@ -69,10 +66,8 @@ class MainApp:
             except Exception as e:
                 print(f"Error cargando {path}: {e}")
         
-        # Si ninguna ruta funciona, mostrar qué archivos existen
         print("Buscando archivos CSV disponibles...")
         try:
-            # Listar archivos en directorios posibles
             possible_dirs = ['/app', '/app/preguntas', '/preguntas', '.', './preguntas', '/']
             for dir_path in possible_dirs:
                 if os.path.exists(dir_path):
@@ -213,7 +208,6 @@ class MainApp:
                 "intento": 0  # Primer intento
             }
             
-            # Enviar directamente a Kafka
             self.kafka_producer.send('preguntas-nuevas', message)
             self.kafka_producer.flush()
             
@@ -281,11 +275,9 @@ class MainApp:
             
             valid_questions_processed += 1
             
-            # Mostrar estadísticas cada 10 preguntas
             if valid_questions_processed % 10 == 0:
                 self.show_stats(valid_questions_processed)
             
-            # Esperar antes de la siguiente iteración
             if valid_questions_processed < num_preguntas:
                 print(f"Esperando {interval_seconds} segundos...")
                 time.sleep(interval_seconds)
@@ -295,7 +287,6 @@ class MainApp:
         print(f"   Preguntas válidas procesadas: {valid_questions_processed}")
         print(f"   Preguntas enviadas a Kafka: {self.processed_count}")
         
-        # Esperar un poco para que se procesen los mensajes
         print("Esperando procesamiento de mensajes en Kafka...")
         time.sleep(10)
         
@@ -312,7 +303,6 @@ class MainApp:
         try:
             print(f"\n --- ESTADÍSTICAS después de {num_preguntas} preguntas ---")
             
-            # Estadísticas de cache
             try:
                 cache_response = requests.get(f"{self.CACHE_URL}/stats", timeout=5)
                 if cache_response.status_code == 200:
@@ -321,7 +311,6 @@ class MainApp:
             except:
                 print("CACHE: No disponible")
             
-            # Promedio de scores
             try:
                 avg_response = requests.get(f"{self.DATABASE_URL}/average_score", timeout=5)
                 if avg_response.status_code == 200:
@@ -331,7 +320,6 @@ class MainApp:
             except:
                 print("Score promedio: No disponible")
             
-            # Topics de Kafka
             try:
                 topics_response = requests.get(f"{self.KAFKA_MANAGER_URL}/topics", timeout=5)
                 if topics_response.status_code == 200:
@@ -353,7 +341,6 @@ class MainApp:
         print("REPORTE FINAL DEL SISTEMA - RESUMEN DE MÉTRICAS")
         print("="*100)
         
-        # Esperar a que se procesen los últimos mensajes
         print("Generando reporte final...")
         time.sleep(5)
         
@@ -364,7 +351,6 @@ class MainApp:
         }
         
         try:
-            # Obtener métricas de Kafka
             print("\nObteniendo métricas de Kafka...")
             kafka_response = requests.get(services['kafka_metrics'], timeout=15)
             if kafka_response.status_code == 200:
@@ -381,7 +367,6 @@ class MainApp:
                     for topic, rate in throughput.items():
                         print(f"  {topic:<25}: {rate:>6.2f} msg/min")
                 
-                # Tiempos en cola
                 queue_times = kafka_metrics.get('queue_times_seconds', {})
                 if queue_times:
                     print("\nTIEMPOS PROMEDIO EN COLA:")
@@ -390,7 +375,6 @@ class MainApp:
             else:
                 print(f"Kafka metrics respondió con código: {kafka_response.status_code}")
             
-            # Obtener analytics de Flink
             print("\nObteniendo analytics de Flink...")
             flink_response = requests.get(services['flink_metrics'], timeout=15)
             if flink_response.status_code == 200:
@@ -409,7 +393,6 @@ class MainApp:
                         percentage = (count / total) * 100 if total > 0 else 0
                         print(f"  {decision:<12}: {count:>4} ({percentage:>5.1f}%)")
                 
-                # Mostrar efectividad de reintentos
                 feedback = flink_metrics.get('feedback_loop_analysis', {})
                 effectiveness = feedback.get('effectiveness_by_intento', {})
                 if effectiveness:
@@ -419,7 +402,6 @@ class MainApp:
             else:
                 print(f"Flink metrics respondió con código: {flink_response.status_code}")
             
-            # Verificar base de datos con estadísticas detalladas
             print("\nVerificando base de datos...")
             db_response = requests.get(services['db_stats'], timeout=15)
             if db_response.status_code == 200:
@@ -462,7 +444,6 @@ if __name__ == '__main__':
             total_sent = app.run_continuous_simulation(50, 5)
             print(f"Simulación completada. Total enviado: {total_sent}")
 
-            # Generar reporte final
             app.generate_final_report()
             
         else:
@@ -471,11 +452,11 @@ if __name__ == '__main__':
             
     except KeyboardInterrupt:
         print("\nAplicación interrumpida por el usuario")
-        # Generar reporte final incluso si se interrumpe
         try:
             app.generate_final_report()
         except:
             pass
     except Exception as e:
         print(f"Error fatal en MainApp: {e}")
+
         sys.exit(1)
